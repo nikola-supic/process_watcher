@@ -8,7 +8,7 @@ Created on Fri Feb 17 11:25:2503 2021
 """
 #!/usr/bin/env python3
 
-# Importgin the libraries
+# Importing the libraries
 from threading import Timer
 from sys import exit
 from datetime import datetime
