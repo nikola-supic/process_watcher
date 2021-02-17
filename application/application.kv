@@ -1,0 +1,34 @@
+#:import C kivy.utils.get_color_from_hex
+
+# #999999 - primary color
+# #474646 - secondary color
+
+WindowManager:
+	WelcomeWindow:
+	MainWindow:
+
+<WelcomeWindow>:
+	name: 'welcome'
+	Button:
+		text: 'WELCOME TO\nPROCESS WATCHER'
+		font_name: 'consola'
+		font_size: 48
+		bold: True
+		halign: 'center'
+
+		background_color: C('#999999')
+		background_normal: 'images/welcome.jpg'
+		background_down: 'images/welcome.jpg'
+		border: (4,4,4,4)
+
+		on_release:
+			root.manager.transition.direction = 'up'
+			app.root.current = 'main'
+
+<MainWindow>:
+	name: 'main'
+	canvas.before:
+		Rectangle:
+			pos: self.pos
+			size: self.size
+			source: 'images/background.jpg'
