@@ -1,7 +1,7 @@
 #:import C kivy.utils.get_color_from_hex
 
-# #999999 - primary color
-# #474646 - secondary color
+# #474646 - primary color
+# #999999 - secondary color
 
 WindowManager:
 	WelcomeWindow:
@@ -16,7 +16,7 @@ WindowManager:
 		bold: True
 		halign: 'center'
 
-		background_color: C('#999999')
+		background_color: C('#474646')
 		background_normal: 'images/welcome.jpg'
 		background_down: 'images/welcome.jpg'
 		border: (4,4,4,4)
@@ -25,10 +25,62 @@ WindowManager:
 			root.manager.transition.direction = 'up'
 			app.root.current = 'main'
 
+
+
+<CustomButton@Button>:
+	bold: True
+	background_color: C('#474646')
+	background_normal: ''
+	background_down: ''
+	border: (4,4,4,4)
+	on_press: self.background_color = C('#999999')
+	on_release: self.background_color = C('#474646')
+	font_name: 'consola'
+
+<CustomLabel@Label>:
+	bold: True
+	font_name: 'consola'
+	halign: 'left'
+
+
 <MainWindow>:
 	name: 'main'
-	canvas.before:
-		Rectangle:
-			pos: self.pos
-			size: self.size
-			source: 'images/background.jpg'
+	output: output
+
+	GridLayout:
+		canvas.before:
+			Rectangle:
+				pos: self.pos
+				size: self.size
+				source: 'images/background.jpg'
+		
+		cols: 1
+		size: root.width, root.height
+		GridLayout:
+			cols: 2
+			size_hint: 1, 0.12
+			CustomButton:
+				text: 'ADD PROCESS'
+				on_release:
+					root.run()
+			CustomButton:
+				text: 'STATS'
+				on_release:
+					root.see_stats()
+
+		GridLayout:
+			cols: 1
+			TextInput:
+				id: output
+				font_name: 'consola'
+
+		GridLayout:
+			cols: 1
+			size_hint: 1, 0.12
+			CustomButton:
+				text: 'Footer BY Sule'
+
+
+
+
+
