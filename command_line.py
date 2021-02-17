@@ -1,8 +1,8 @@
 """
-Created on Fri Feb 17 11:25:2503 2021
+Created on Wed Feb 17 11:25:2503 2021
 
 @author: Sule
-@name: process_watcher.py
+@name: command_line.py
 @description: ->
     DOCSTRING:
 """
