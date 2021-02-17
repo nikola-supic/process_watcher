@@ -39,6 +39,24 @@ class Process():
         self.time_started = datetime.now()
         self.active = False
 
+    def check_date(self, mydb, mycursor):
+        """
+        DOCSTRING:
+
+        """
+        today = datetime.now()
+        if today.day != self.date.day:
+            self.daily = 0
+        if today.month != self.date.month:
+            self.monthly = 0
+        if today.year != self.date.year:
+            self.yearly = 0
+
+        sql = "UPDATE apps SET daily=%s, monthly=%s, yearly=%s WHERE id=%s"
+        val = (self.daily, self.monthly, self.yearly, self.id, )
+        mycursor.execute(sql, val)
+        mydb.commit()
+
 
 class App():
     """
@@ -54,7 +72,16 @@ class App():
         self.mycursor = mycursor
         self.caption_list = self.get_captions_from_db()
         self.process_list = self.get_processes_from_db()
+        self.check_date()
 
+
+    def check_date(self):
+        """
+        DOCSTRING:
+
+        """
+        for process in self.process_list:
+            process.check_date(self.mydb, self.mycursor)
 
     def get_captions_from_db(self):
         """
@@ -137,8 +164,8 @@ class App():
         process.all_time += duration
 
         sql = "UPDATE apps SET date=%s, daily=%s, monthly=%s, yearly=%s, all_time=%s WHERE id=%s"
-        val = (date, process.daily, process.monthly, process.yearly, process.all_time, process.id)
-        self.mycursor.execute(sql, val, )
+        val = (date, process.daily, process.monthly, process.yearly, process.all_time, process.id, )
+        self.mycursor.execute(sql, val)
         self.mydb.commit()
 
         print(f'[-] Shuting down {process.name}... ({duration}s)')
