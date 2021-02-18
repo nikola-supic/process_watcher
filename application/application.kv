@@ -3,16 +3,89 @@
 # #474646 - primary color
 # #999999 - secondary color
 
+<PopupButton@Button>:
+	size_hint: 1, 0.4
+	background_normal: ''
+	background_down: ''
+	border: (4,4,4,4)
+	font_name: 'consola'
+
+
+<PopupLabel@Label>:
+	bold: True
+	pos_hint: {"top": 0.8}
+	font_name: 'consola'
+	halign: 'center'
+
+<CustomPopup>:
+	size_hint: None, None
+	size: 300, 150
+	auto_dismiss: False
+	title_align: 'center'
+	title_font: 'consola'
+
+<PopupError>:
+	title: "ERROR, PLEASE READ CAREFULLY."
+	background_color: C('#CC1212')
+	title_color: C("#CC1212")
+	separator_color: C("#CC1212")
+
+	GridLayout:
+		cols: 1
+		PopupLabel:
+			id: error_label
+		PopupButton:
+			text: "CLOSE"
+			background_color: C('#CC1212')
+			on_press: self.background_color = C('#8a1111')
+			on_release: root.dismiss()
+
+<PopupInfo>:
+	title: "INFO, PLEASE READ CAREFULLY."
+	background_color: C('#11bf40')
+	title_color: C("#11bf40")
+	separator_color: C("#11bf40")
+
+	GridLayout:
+		cols: 1
+		PopupLabel:
+			id: info_label
+		PopupButton:
+			text: "CLOSE"
+			background_color: C('#11bf40')
+			on_press: self.background_color = C('#0a802a')
+			on_release: root.dismiss()
+
+<PopupQuit>:
+	title: "LEAVING SO SOON?"
+	background_color: C('#999999')
+	title_color: C("#999999")
+	separator_color: C("#999999")
+
+	GridLayout:
+		cols: 1
+		PopupLabel:
+			id: quit_label
+		PopupButton:
+			id: quit_button
+			text: "QUIT"
+			background_color: C('#474646')
+			on_press: self.background_color = C('#999999')
+			on_release: root.dismiss()
+
 WindowManager:
 	WelcomeWindow:
 	MainWindow:
+	OutputWindow:
+	AddProcess:
+	SeeStats:
 
 <WelcomeWindow>:
 	name: 'welcome'
 	Button:
 		text: 'WELCOME TO\nPROCESS WATCHER'
 		font_name: 'consola'
-		font_size: 48
+		font_size: 32
 		bold: True
 		halign: 'center'
 
@@ -23,8 +96,7 @@ WindowManager:
 
 		on_release:
 			root.manager.transition.direction = 'up'
-			app.root.current = 'main'
-
+			app.root.current = 'output'
 
 
 <CustomButton@Button>:
@@ -45,7 +117,6 @@ WindowManager:
 
 <MainWindow>:
 	name: 'main'
-	output: output
 
 	GridLayout:
 		canvas.before:
@@ -57,30 +128,115 @@ WindowManager:
 		cols: 1
 		size: root.width, root.height
 		GridLayout:
-			cols: 2
-			size_hint: 1, 0.12
+			cols: 3
+			size_hint: 1, 0.16
 			CustomButton:
-				text: 'ADD PROCESS'
+				text: 'OUTPUT'
 				on_release:
-					root.run()
+					root.manager.transition.direction = 'up'
+					app.root.current = 'output'
 			CustomButton:
-				text: 'STATS'
+				text: 'ADD PROCESS TO DB'
 				on_release:
-					root.see_stats()
+					root.manager.transition.direction = 'up'
+					app.root.current = 'add_process'
+			CustomButton:
+				text: 'SEE STATS'
+				on_release:
+					root.manager.transition.direction = 'up'
+					app.root.current = 'stats'
 
 		GridLayout:
 			cols: 1
-			TextInput:
-				id: output
-				font_name: 'consola'
 
+		CustomButton:
+			size_hint: 1, 0.16
+			text: 'Footer BY Sule'
+
+
+<MainGrid@GridLayout>:
+	pos_hint: {'y' : 0.12 }
+	size_hint: 1, 0.76
+
+
+<OutputWindow>:
+	name: 'output'
+	output: output
+
+	MainGrid:
+		cols: 1
+		TextInput:
+			id: output
+			font_name: 'consola'
+			border: (4,4,4,4)
+			readonly: True
+
+<CustomTextInput@TextInput>:
+	multiline: False
+	font_name: 'consola'
+	border: (4,4,4,4)
+
+<AddProcess>:
+	name: 'add_process'
+	proc_name: proc_name
+	proc_caption: proc_caption
+	proc_type: proc_type
+	MainGrid:
+		cols: 1
 		GridLayout:
-			cols: 1
-			size_hint: 1, 0.12
-			CustomButton:
-				text: 'Footer BY Sule'
+			cols: 3
+			GridLayout:
+				size_hint: 0.4, 1
+				cols: 1
+
+			GridLayout:
+				cols: 1
+				GridLayout:
+					cols: 1
+					size_hint: 1, 0.15
+
+				GridLayout:
+					cols: 1
+					Label:
+						text: 'Input name of new process:'
+					CustomTextInput:
+						id: proc_name
+
+					Label:
+						text: 'Input caption of new process:'
+					CustomTextInput:
+						id: proc_caption
+
+					Label:
+						text: 'Input type of new process:'
+					CustomTextInput:
+						id: proc_type
+
+				GridLayout:
+					cols: 1
+					size_hint: 1, 0.1
+
+				GridLayout:
+					cols: 1
+					size_hint: 1, 0.15
+					CustomButton:
+						text: 'ADD TO DB'
+						size_hint: 1, 0.45
+						on_release:
+							root.add_process()
+
+				GridLayout:
+					cols: 1
+					size_hint: 1, 0.15
+
+			GridLayout:
+				size_hint: 0.4, 1
+				cols: 1
 
 
-
-
-
+<SeeStats>:
+	name: 'stats'
+	MainGrid:
+		cols: 1
+		Button:
+			text: 'OKKK'

@@ -22,3 +22,9 @@ except mysql.connector.errors.InterfaceError:
     print('[-] Cant connect to DB.')
     sys.exit()
 
+def new_process(name, caption, typ):
+	sql = "INSERT INTO apps (name, caption, type) VALUES (%s, %s, %s)"
+	val = (name, caption, typ, )
+
+	mycursor.execute(sql, val)
+	mydb.commit()

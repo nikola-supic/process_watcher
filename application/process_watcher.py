@@ -18,9 +18,14 @@ import time
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
+from kivy.uix.popup import Popup
 from kivy.config import Config
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
+
+from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 
 import database as DB
 
@@ -74,6 +79,38 @@ class Process():
 #######################################################################################################################
 #######################################################################################################################
 
+class CustomPopup(Popup):
+    """
+    DOCSTRING:
+
+    """
+
+
+class PopupError(CustomPopup):
+    """
+    DOCSTRING:
+
+    """
+
+
+class PopupInfo(CustomPopup):
+    """
+    DOCSTRING:
+
+    """
+
+
+class PopupQuit(CustomPopup):
+    """
+    DOCSTRING:
+
+    """
+
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
 
 class WelcomeWindow(Screen):
     """
@@ -81,7 +118,23 @@ class WelcomeWindow(Screen):
 
     """
 
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+
 class MainWindow(Screen):
+    """
+    DOCSTRING:
+
+    """
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+class OutputWindow(MainWindow):
     """
     DOCSTRING:
 
@@ -101,6 +154,13 @@ class MainWindow(Screen):
         self.process_list = self.get_processes_from_db()
         self.check_date()
 
+
+    def on_pre_enter(self):
+        """
+        DOCSTRING:
+
+        """
+        self.run()
 
     def check_date(self):
         """
@@ -200,6 +260,10 @@ class MainWindow(Screen):
 
 
     def run_thread(self):
+        """
+        DOCSTRING:
+
+        """
         pythoncom.CoInitialize()
         while True:
             output_text, active_list, inactive_list = self.check_for_change()
@@ -219,6 +283,40 @@ class MainWindow(Screen):
         timer = Thread(target = self.run_thread)
         timer.daemon = True
         timer.start()
+
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+
+class AddProcess(MainWindow):
+    """
+    DOCSTRING:
+
+    """
+    proc_name = ObjectProperty(None)
+    proc_caption = ObjectProperty(None)
+    proc_type = ObjectProperty(None)
+
+    def add_process(self):
+        DB.new_process(self.proc_name.text, self.proc_caption.text, self.proc_type.text)
+
+        self.proc_name.text = ''
+        self.proc_caption.text = ''
+        self.proc_type.text = ''
+
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+
+class SeeStats(MainWindow):
+    """
+    DOCSTRING:
+
+    """
 
 #######################################################################################################################
 #######################################################################################################################
@@ -240,13 +338,40 @@ class Application(MDApp):
         DOCSTRING:
 
         """
-        # self.icon = 'images/icon.png'
+        self.icon = 'images/icon.png'
         self.title = 'PW // Process Watcher'
+        Window.bind(on_request_close=self.on_request_close)
+
+    def on_request_close(self, *args):
+        show_popup(self, 'quit', 'Are you sure you want to quit?')
+        return True
+
+
+def show_popup(app, type, text):
+    """
+    DOCSTRING:
+
+    """
+    if type == 'error':
+        popup = PopupError()
+        popup.ids.error_label.text = text
+        popup.open()
+    elif type == 'info':
+        popup = PopupInfo()
+        popup.ids.info_label.text = text
+        popup.open()
+    elif type == 'quit':
+        popup = PopupQuit()
+        popup.ids.quit_label.text = text
+        popup.ids.quit_button.bind(on_release=app.stop)
+        popup.open()
+    else:
+        show_popup(type='error', text='Trying to create wrong type of popup screen.')
 
 if __name__ == '__main__':
     # Config.set('kivy', 'exit_on_escape', '0')
-    Config.set('graphics', 'resizable', False)
-    Config.write()
+    # Config.set('graphics', 'resizable', False)
+    # Config.write()
 
-    Window.size = (480, 480)
+    Window.size = (480, 360)
     Application().run()
