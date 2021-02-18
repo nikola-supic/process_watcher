@@ -153,6 +153,7 @@ class OutputWindow(MainWindow):
         self.caption_list = self.get_captions_from_db()
         self.process_list = self.get_processes_from_db()
         self.check_date()
+        self.running = False
 
 
     def on_pre_enter(self):
@@ -225,7 +226,7 @@ class OutputWindow(MainWindow):
             if self.process_list[tmp.id-1].active:
                 output.append(self.process_start(tmp))
 
-        return output, [x for x in self.process_list if x.active], [x for x in self.process_list if not x.active]
+        return output
 
 
     def process_start(self, process):
@@ -266,7 +267,7 @@ class OutputWindow(MainWindow):
         """
         pythoncom.CoInitialize()
         while True:
-            output_text, active_list, inactive_list = self.check_for_change()
+            output_text = self.check_for_change()
 
             for item in output_text:
                 self.output.text += item + '\n'
@@ -279,10 +280,12 @@ class OutputWindow(MainWindow):
         DOCSTRING:
 
         """
+        if not self.running:
+            timer = Thread(target = self.run_thread)
+            timer.daemon = True
+            timer.start()
 
-        timer = Thread(target = self.run_thread)
-        timer.daemon = True
-        timer.start()
+            self.running = True
 
 
 #######################################################################################################################
@@ -306,6 +309,8 @@ class AddProcess(MainWindow):
         self.proc_caption.text = ''
         self.proc_type.text = ''
 
+        show_popup('info', 'Successfuly added new process to DB.')
+
 
 #######################################################################################################################
 #######################################################################################################################
@@ -317,6 +322,33 @@ class SeeStats(MainWindow):
     DOCSTRING:
 
     """
+    stats_output = ObjectProperty(None)
+
+    def get_stats(self):
+        stats_text = DB.get_stats()
+        self.stats_output.text = stats_text
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+
+class AppUsage(MainWindow):
+    """
+    DOCSTRING:
+
+    """
+    app_input = ObjectProperty(None)
+    app_output = ObjectProperty(None)
+
+    def get_usage(self):
+        output_text = DB.get_usage(self.app_input.text)
+        self.app_input.text = ''
+        
+        if not output_text:
+            show_popup('error', 'Wrong application name.')
+        else:
+            self.app_output.text = output_text
 
 #######################################################################################################################
 #######################################################################################################################
@@ -343,11 +375,11 @@ class Application(MDApp):
         Window.bind(on_request_close=self.on_request_close)
 
     def on_request_close(self, *args):
-        show_popup(self, 'quit', 'Are you sure you want to quit?')
+        show_popup('quit', 'Are you sure you want to quit?')
         return True
 
 
-def show_popup(app, type, text):
+def show_popup(type, text):
     """
     DOCSTRING:
 
@@ -363,7 +395,6 @@ def show_popup(app, type, text):
     elif type == 'quit':
         popup = PopupQuit()
         popup.ids.quit_label.text = text
-        popup.ids.quit_button.bind(on_release=app.stop)
         popup.open()
     else:
         show_popup(type='error', text='Trying to create wrong type of popup screen.')

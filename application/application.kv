@@ -66,12 +66,44 @@
 		cols: 1
 		PopupLabel:
 			id: quit_label
-		PopupButton:
-			id: quit_button
-			text: "QUIT"
-			background_color: C('#474646')
-			on_press: self.background_color = C('#999999')
-			on_release: root.dismiss()
+		GridLayout:
+			cols: 3
+			size_hint: 1, 0.4
+			PopupButton:
+				id: quit_button
+				text: "QUIT"
+				background_color: C('#474646')
+				on_press: self.background_color = C('#999999')
+				on_release: app.stop()
+			GridLayout:
+				cols: 1
+				size_hint: 0.4, 1
+			PopupButton:
+				id: cancel_button
+				text: "NO"
+				background_color: C('#474646')
+				on_press: self.background_color = C('#999999')
+				on_release: root.dismiss()
+
+<CustomButton@Button>:
+	bold: True
+	background_color: C('#474646')
+	background_normal: ''
+	background_down: ''
+	border: (4,4,4,4)
+	on_press: self.background_color = C('#999999')
+	on_release: self.background_color = C('#474646')
+	font_name: 'consola'
+
+<CustomLabel@Label>:
+	bold: True
+	font_name: 'consola'
+	halign: 'left'
+
+<CustomTextInput@TextInput>:
+	multiline: False
+	font_name: 'consola'
+	border: (4,4,4,4)
 
 WindowManager:
 	WelcomeWindow:
@@ -79,6 +111,7 @@ WindowManager:
 	OutputWindow:
 	AddProcess:
 	SeeStats:
+	AppUsage
 
 <WelcomeWindow>:
 	name: 'welcome'
@@ -98,23 +131,6 @@ WindowManager:
 			root.manager.transition.direction = 'up'
 			app.root.current = 'output'
 
-
-<CustomButton@Button>:
-	bold: True
-	background_color: C('#474646')
-	background_normal: ''
-	background_down: ''
-	border: (4,4,4,4)
-	on_press: self.background_color = C('#999999')
-	on_release: self.background_color = C('#474646')
-	font_name: 'consola'
-
-<CustomLabel@Label>:
-	bold: True
-	font_name: 'consola'
-	halign: 'left'
-
-
 <MainWindow>:
 	name: 'main'
 
@@ -128,7 +144,7 @@ WindowManager:
 		cols: 1
 		size: root.width, root.height
 		GridLayout:
-			cols: 3
+			cols: 4
 			size_hint: 1, 0.16
 			CustomButton:
 				text: 'OUTPUT'
@@ -136,7 +152,7 @@ WindowManager:
 					root.manager.transition.direction = 'up'
 					app.root.current = 'output'
 			CustomButton:
-				text: 'ADD PROCESS TO DB'
+				text: 'CREATE PROCESS'
 				on_release:
 					root.manager.transition.direction = 'up'
 					app.root.current = 'add_process'
@@ -145,6 +161,11 @@ WindowManager:
 				on_release:
 					root.manager.transition.direction = 'up'
 					app.root.current = 'stats'
+			CustomButton:
+				text: 'APP USAGE'
+				on_release:
+					root.manager.transition.direction = 'up'
+					app.root.current = 'usage'
 
 		GridLayout:
 			cols: 1
@@ -165,16 +186,10 @@ WindowManager:
 
 	MainGrid:
 		cols: 1
-		TextInput:
+		CustomTextInput:
 			id: output
-			font_name: 'consola'
-			border: (4,4,4,4)
 			readonly: True
 
-<CustomTextInput@TextInput>:
-	multiline: False
-	font_name: 'consola'
-	border: (4,4,4,4)
 
 <AddProcess>:
 	name: 'add_process'
@@ -197,17 +212,17 @@ WindowManager:
 
 				GridLayout:
 					cols: 1
-					Label:
+					CustomLabel:
 						text: 'Input name of new process:'
 					CustomTextInput:
 						id: proc_name
 
-					Label:
+					CustomLabel:
 						text: 'Input caption of new process:'
 					CustomTextInput:
 						id: proc_caption
 
-					Label:
+					CustomLabel:
 						text: 'Input type of new process:'
 					CustomTextInput:
 						id: proc_type
@@ -236,7 +251,80 @@ WindowManager:
 
 <SeeStats>:
 	name: 'stats'
+	stats_output: stats_output
 	MainGrid:
-		cols: 1
-		Button:
-			text: 'OKKK'
+		cols: 3
+		GridLayout:
+			cols: 1
+			size_hint: 0.2, 1
+
+		GridLayout:
+			cols: 1
+			GridLayout:
+				cols: 1
+				size_hint: 1, 0.2
+
+			GridLayout:
+				cols: 1
+				CustomTextInput:
+					id: stats_output
+					readonly: True
+				CustomButton:
+					size_hint: 1, 0.2
+					text: 'GET STATS'
+					on_release:
+						root.get_stats()
+
+			GridLayout:
+				cols: 1
+				size_hint: 1, 0.2
+
+		GridLayout:
+			cols: 1
+			size_hint: 0.2, 1
+
+
+<AppUsage>:
+	name: 'usage'
+	app_input: app_input
+	app_output: app_output
+
+	MainGrid:
+		cols: 3
+		GridLayout:
+			cols: 1
+			size_hint: 0.2, 1
+
+		GridLayout:
+			cols: 1
+			GridLayout:
+				cols: 1
+				size_hint: 1, 0.2
+
+			GridLayout:
+				cols: 1
+				CustomLabel:
+					text: 'NAME OF APP YOU WANT TO SEE USAGE FOR:'
+					size_hint: 1, 0.2
+				CustomTextInput:
+					id: app_input
+					multiline: False
+					size_hint: 1, 0.2
+				CustomTextInput:
+					id: app_output
+					multiline: True
+					readonly: True
+
+				CustomButton:
+					size_hint: 1, 0.2
+					text: 'GET USAGE'
+					on_release:
+						root.get_usage()
+
+			GridLayout:
+				cols: 1
+				size_hint: 1, 0.2
+
+		GridLayout:
+			cols: 1
+			size_hint: 0.2, 1
