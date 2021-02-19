@@ -45,3 +45,35 @@ def get_usage(name):
 	if row:
 		return f'Name: {row[1]} ({row[2]})\nType: {row[3]}\nLast time used: {row[4]}\nDaily usage: {row[5]}\nMonthly usage: {row[6]}\nYearly: {row[7]}\nOverall usage: {row[8]}'
 	return False
+
+def reset_start_time():
+	mycursor.execute("UPDATE apps SET time_started=NULL")
+	mydb.commit()
+
+
+def update_on_quit():
+	mycursor.execute("SELECT id, daily, monthly, yearly, all_time, time_started FROM apps WHERE time_started != '0000-00-00 00:00:00'")
+	result = mycursor.fetchall()
+	for row in result:
+		proc_id = row[0]
+		daily = row[1]
+		monthly = row[2]
+		yearly = row[3]
+		all_time = row[4]
+		time_started = row[5]
+		# print(proc_id, daily, monthly, yearly, all_time, time_started)
+
+		time_finished = datetime.now()
+		duration = int((time_finished - time_started).total_seconds())
+		date = datetime.now()
+		daily += duration
+		monthly += duration
+		yearly += duration
+		all_time += duration
+
+		sql = "UPDATE apps SET date=%s, daily=%s, monthly=%s, yearly=%s, all_time=%s, time_started=NULL WHERE id=%s"
+		val = (date, daily, monthly, yearly, all_time, proc_id, )
+		mycursor.execute(sql, val)
+		mydb.commit()
+
+		print(f'[-] Shuting down (ID: {proc_id})... ({duration}s)')

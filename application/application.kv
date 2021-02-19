@@ -74,7 +74,9 @@
 				text: "QUIT"
 				background_color: C('#474646')
 				on_press: self.background_color = C('#999999')
-				on_release: app.stop()
+				on_release: 
+					root.quit_app()
+					app.stop()
 			GridLayout:
 				cols: 1
 				size_hint: 0.4, 1
@@ -110,7 +112,7 @@ WindowManager:
 	MainWindow:
 	OutputWindow:
 	AddProcess:
-	SeeStats:
+	OverallStats:
 	AppUsage
 
 <WelcomeWindow>:
@@ -147,7 +149,7 @@ WindowManager:
 			cols: 4
 			size_hint: 1, 0.16
 			CustomButton:
-				text: 'OUTPUT'
+				text: 'OUTPUT LOG'
 				on_release:
 					root.manager.transition.direction = 'up'
 					app.root.current = 'output'
@@ -157,7 +159,7 @@ WindowManager:
 					root.manager.transition.direction = 'up'
 					app.root.current = 'add_process'
 			CustomButton:
-				text: 'SEE STATS'
+				text: 'OVERALL STATS'
 				on_release:
 					root.manager.transition.direction = 'up'
 					app.root.current = 'stats'
@@ -189,7 +191,6 @@ WindowManager:
 		CustomTextInput:
 			id: output
 			readonly: True
-
 
 <AddProcess>:
 	name: 'add_process'
@@ -249,7 +250,7 @@ WindowManager:
 				cols: 1
 
 
-<SeeStats>:
+<OverallStats>:
 	name: 'stats'
 	stats_output: stats_output
 	MainGrid:

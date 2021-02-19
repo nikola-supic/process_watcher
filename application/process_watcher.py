@@ -105,6 +105,8 @@ class PopupQuit(CustomPopup):
     DOCSTRING:
 
     """
+    def quit_app(self):
+        DB.update_on_quit()
 
 
 #######################################################################################################################
@@ -161,7 +163,10 @@ class OutputWindow(MainWindow):
         DOCSTRING:
 
         """
-        self.run()
+        DB.reset_start_time()
+
+        if not self.running:
+            self.run()
 
     def check_date(self):
         """
@@ -235,6 +240,11 @@ class OutputWindow(MainWindow):
 
         """
         process.time_started = datetime.now()
+        sql = "UPDATE apps SET time_started=%s WHERE id=%s"
+        val = (process.time_started, process.id)
+        DB.mycursor.execute(sql, val)
+        DB.mydb.commit()
+
         return f'[+] Starting {process.name}...'
 
 
@@ -252,7 +262,7 @@ class OutputWindow(MainWindow):
         process.yearly += duration
         process.all_time += duration
 
-        sql = "UPDATE apps SET date=%s, daily=%s, monthly=%s, yearly=%s, all_time=%s WHERE id=%s"
+        sql = "UPDATE apps SET date=%s, daily=%s, monthly=%s, yearly=%s, all_time=%s, time_started=NULL WHERE id=%s"
         val = (date, process.daily, process.monthly, process.yearly, process.all_time, process.id, )
         self.mycursor.execute(sql, val)
         self.mydb.commit()
@@ -280,12 +290,11 @@ class OutputWindow(MainWindow):
         DOCSTRING:
 
         """
-        if not self.running:
-            timer = Thread(target = self.run_thread)
-            timer.daemon = True
-            timer.start()
+        timer = Thread(target = self.run_thread)
+        timer.daemon = True
+        timer.start()
 
-            self.running = True
+        self.running = True
 
 
 #######################################################################################################################
@@ -317,7 +326,7 @@ class AddProcess(MainWindow):
 #######################################################################################################################
 
 
-class SeeStats(MainWindow):
+class OverallStats(MainWindow):
     """
     DOCSTRING:
 
@@ -406,3 +415,16 @@ if __name__ == '__main__':
 
     Window.size = (480, 360)
     Application().run()
+    add_to_startup()
+
+
+import getpass
+USER_NAME = getpass.getuser()
+
+
+def add_to_startup(file_path=""):
+    if file_path == "":
+        file_path = os.path.dirname(os.path.realpath(__file__))
+    bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
+    with open(bat_path + '\\' + "open.bat", "w+") as bat_file:
+        bat_file.write(r'start "" %s' % file_path)
