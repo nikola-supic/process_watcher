@@ -9,18 +9,21 @@ Created on Fri Wed 17 18:57:11 2020
 
 from datetime import datetime, timedelta
 import mysql.connector
+from time import sleep
 
-try:
-	mydb = mysql.connector.connect(
-		host='localhost',
-		user='root',
-		passwd='',
-		database='process_watcher'
-		)
-	mycursor = mydb.cursor()
-except mysql.connector.errors.InterfaceError: 
-	print('[-] Cant connect to DB.')
-	sys.exit()
+while True:
+	try:
+		mydb = mysql.connector.connect(
+			host='localhost',
+			user='root',
+			passwd='',
+			database='process_watcher'
+			)
+		mycursor = mydb.cursor()
+		break
+	except mysql.connector.errors.InterfaceError: 
+		print('[-] Cant connect to DB.')
+		sleep(5)
 
 def new_process(name, caption, typ):
 	sql = "INSERT INTO apps (name, caption, type) VALUES (%s, %s, %s)"
