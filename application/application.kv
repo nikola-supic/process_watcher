@@ -108,30 +108,11 @@
 	border: (4,4,4,4)
 
 WindowManager:
-	WelcomeWindow:
 	MainWindow:
 	OutputWindow:
 	AddProcess:
 	OverallStats:
 	AppUsage
-
-<WelcomeWindow>:
-	name: 'welcome'
-	Button:
-		text: 'WELCOME TO\nPROCESS WATCHER'
-		font_name: 'consola'
-		font_size: 32
-		bold: True
-		halign: 'center'
-
-		background_color: C('#474646')
-		background_normal: 'images/welcome.jpg'
-		background_down: 'images/welcome.jpg'
-		border: (4,4,4,4)
-
-		on_release:
-			root.manager.transition.direction = 'up'
-			app.root.current = 'output'
 
 <MainWindow>:
 	name: 'main'
@@ -171,6 +152,12 @@ WindowManager:
 
 		GridLayout:
 			cols: 1
+			Label:
+				text: 'WELCOME TO\nPROCESS WATCHER'
+				font_name: 'consola'
+				font_size: 32
+				bold: True
+				halign: 'center'
 
 		CustomButton:
 			size_hint: 1, 0.16
