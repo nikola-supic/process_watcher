@@ -1,5 +1,5 @@
 """
-Created on Fri Wed 17 18:04:39 2020
+Created on Wed Feb 17 18:04:39 2020
 
 @author: Sule
 @name: process_watcher.py
@@ -10,7 +10,7 @@ Created on Fri Wed 17 18:04:39 2020
 
 # Importing the libraries
 from threading import Timer, Thread
-from datetime import datetime
+from datetime import datetime, timedelta
 import wmi
 import pythoncom
 import time
@@ -130,6 +130,7 @@ class OutputWindow(MainWindow):
 
     """
     output = ObjectProperty(None)
+    output_button = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         """
@@ -249,13 +250,15 @@ class OutputWindow(MainWindow):
         process.monthly += duration
         process.yearly += duration
         process.all_time += duration
+        process.time_started = None
+        process.active = False
 
         sql = "UPDATE apps SET date=%s, daily=%s, monthly=%s, yearly=%s, all_time=%s, time_started=NULL WHERE id=%s"
         val = (date, process.daily, process.monthly, process.yearly, process.all_time, process.id, )
         self.mycursor.execute(sql, val)
         self.mydb.commit()
 
-        return f'[-] Shuting down {process.name}... ({duration}s)'
+        return f'[-] Shuting down {process.name}... ({timedelta(seconds=duration)}s)'
 
 
     def run_thread(self):
@@ -264,7 +267,7 @@ class OutputWindow(MainWindow):
 
         """
         pythoncom.CoInitialize()
-        while True:
+        while self.running:
             output_text = self.check_for_change()
 
             for item in output_text:
@@ -278,11 +281,34 @@ class OutputWindow(MainWindow):
         DOCSTRING:
 
         """
-        timer = Thread(target = self.run_thread)
-        timer.daemon = True
-        timer.start()
-
         self.running = True
+        self.thread = Thread(target = self.run_thread)
+        self.thread.daemon = True
+        self.thread.start()
+
+
+    def start_stop_button(self):
+        """
+        DOCSTRING:
+
+        """
+        if self.running:
+            self.output.text += '\n[*] STOPING PROCESS WACHER\n'
+
+            self.running = False
+            self.output_button.text = 'START ALL PROCESS (START WATCHING)'
+
+            output_text = ''
+            for process in self.process_list:
+                if process.active:
+                    output_text += self.process_shutdown(process) + '\n'
+
+            self.output.text += output_text
+
+        else:
+            self.output.text += '\n[*] STARTING PROCESS WACHER\n'
+            self.run()
+            self.output_button.text = 'SHUTDOWN ALL PROCESS (STOP WATCHING)'
 
 
 #######################################################################################################################

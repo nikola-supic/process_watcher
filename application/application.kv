@@ -172,12 +172,20 @@ WindowManager:
 <OutputWindow>:
 	name: 'output'
 	output: output
+	output_button: output_button
 
 	MainGrid:
 		cols: 1
 		CustomTextInput:
 			id: output
 			readonly: True
+		CustomButton:
+			id: output_button
+			size_hint: 1, 0.16
+			text: 'SHUTDOWN ALL PROCESS (STOP WATCHING)'
+			on_release:
+				root.start_stop_button()
+
 
 <AddProcess>:
 	name: 'add_process'
