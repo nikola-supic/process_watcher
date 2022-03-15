@@ -9,49 +9,38 @@ Created on Wed Feb 17 18:04:39 2020
 #!/usr/bin/env python3
 
 # Importing the libraries
-from threading import Timer, Thread
 from datetime import datetime, timedelta
 import wmi
-import pythoncom
-import time
 
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
-from kivy.config import Config
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
-
-from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
+from kivy.clock import Clock
 
 import database as DB
 
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 class Process():
     """
     DOCSTRING:
 
     """
-    def __init__(self, id, name, caption, type, date, daily, monthly, yearly, all_time):
+    def __init__(self, row):
         """
         DOCSTRING:
 
         """
-        self.id = id
-        self.name = name
-        self.caption = caption
-        self.type = type
-        self.date = date
-        self.daily = daily
-        self.monthly = monthly
-        self.yearly = yearly
-        self.all_time = all_time
+        self.sql_id = row[0]
+        self.name = row[1]
+        self.caption = row[2]
+        self.type = row[3]
+        self.date = row[4]
+        self.daily = row[5]
+        self.monthly = row[6]
+        self.yearly = row[7]
+        self.all_time = row[8]
 
         self.time_started = datetime.now()
         self.active = False
@@ -70,14 +59,10 @@ class Process():
             self.yearly = 0
 
         sql = "UPDATE apps SET daily=%s, monthly=%s, yearly=%s WHERE id=%s"
-        val = (self.daily, self.monthly, self.yearly, self.id, )
+        val = (self.daily, self.monthly, self.yearly, self.sql_id, )
         mycursor.execute(sql, val)
         mydb.commit()
 
-
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 class CustomPopup(Popup):
     """
@@ -85,20 +70,17 @@ class CustomPopup(Popup):
 
     """
 
-
 class PopupError(CustomPopup):
     """
     DOCSTRING:
 
     """
 
-
 class PopupInfo(CustomPopup):
     """
     DOCSTRING:
 
     """
-
 
 class PopupQuit(CustomPopup):
     """
@@ -109,20 +91,12 @@ class PopupQuit(CustomPopup):
         DB.update_on_quit()
 
 
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
-
-
 class MainWindow(Screen):
     """
     DOCSTRING:
 
     """
 
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 class OutputWindow(MainWindow):
     """
@@ -145,7 +119,7 @@ class OutputWindow(MainWindow):
         self.process_list = self.get_processes_from_db()
         self.check_date()
         self.running = False
-
+        self.event = None
 
     def on_pre_enter(self):
         """
@@ -177,7 +151,6 @@ class OutputWindow(MainWindow):
             caption_list[row[1]] = row[0]
         return caption_list
 
-
     def get_processes_from_db(self):
         """
         DOCSTRING:
@@ -187,41 +160,39 @@ class OutputWindow(MainWindow):
         self.mycursor.execute("SELECT * FROM apps")
         result = self.mycursor.fetchall()
         for row in result:
-            process = Process(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
+            process = Process(row)
             process_list.append(process)
         return process_list
-
 
     def check_for_change(self):
         """
         DOCSTRING:
 
         """
-        c = wmi.WMI()
+        c_list = wmi.WMI()
         active_list = [x for x in self.process_list if x.active]
         inactive_list = [x for x in self.process_list if not x.active]
 
         for tmp in self.process_list:
             tmp.active = False
 
-        for process in c.Win32_Process(["Caption"]):
+        for process in c_list.Win32_Process(["Caption"]):
             if process.Caption in self.caption_list:
-                id = self.caption_list[process.Caption] - 1
-                current_proc = self.process_list[id]
+                sql_id = self.caption_list[process.Caption] - 1
+                current_proc = self.process_list[sql_id]
                 if not current_proc.active:
                     current_proc.active = True
 
         output = []
         for tmp in active_list:
-            if not self.process_list[tmp.id-1].active:
+            if not self.process_list[tmp.sql_id-1].active:
                 output.append(self.process_shutdown(tmp))
 
         for tmp in inactive_list:
-            if self.process_list[tmp.id-1].active:
+            if self.process_list[tmp.sql_id-1].active:
                 output.append(self.process_start(tmp))
 
         return output
-
 
     def process_start(self, process):
         """
@@ -230,51 +201,43 @@ class OutputWindow(MainWindow):
         """
         process.time_started = datetime.now()
         sql = "UPDATE apps SET time_started=%s WHERE id=%s"
-        val = (process.time_started, process.id)
+        val = (process.time_started, process.sql_id)
         DB.mycursor.execute(sql, val)
         DB.mydb.commit()
 
         return f'[+] Starting {process.name}...'
 
-
-    def process_shutdown(self, process):
+    def process_shutdown(self, proc):
         """
         DOCSTRING:
 
         """
         time_finished = datetime.now()
-        duration = int((time_finished - process.time_started).total_seconds())
+        duration = int((time_finished - proc.time_started).total_seconds())
 
         date = datetime.now()
-        process.daily += duration
-        process.monthly += duration
-        process.yearly += duration
-        process.all_time += duration
-        process.time_started = None
-        process.active = False
+        proc.daily += duration
+        proc.monthly += duration
+        proc.yearly += duration
+        proc.all_time += duration
+        proc.time_started = None
+        proc.active = False
 
         sql = "UPDATE apps SET date=%s, daily=%s, monthly=%s, yearly=%s, all_time=%s, time_started=NULL WHERE id=%s"
-        val = (date, process.daily, process.monthly, process.yearly, process.all_time, process.id, )
+        val = (date, proc.daily, proc.monthly, proc.yearly, proc.all_time, proc.sql_id, )
         self.mycursor.execute(sql, val)
         self.mydb.commit()
 
-        return f'[-] Shuting down {process.name}... ({timedelta(seconds=duration)}s)'
+        return f'[-] Shuting down {proc.name}... ({timedelta(seconds=duration)}s)'
 
-
-    def run_thread(self):
+    def checking(self, dt):
         """
         DOCSTRING:
 
         """
-        pythoncom.CoInitialize()
-        while self.running:
-            output_text = self.check_for_change()
-
-            for item in output_text:
-                self.output.text += item + '\n'
-
-            time.sleep(60) 
-
+        output_text = self.check_for_change()
+        for item in output_text:
+            self.output.text += item + '\n'
 
     def run(self):
         """
@@ -282,10 +245,19 @@ class OutputWindow(MainWindow):
 
         """
         self.running = True
-        self.thread = Thread(target = self.run_thread)
-        self.thread.daemon = True
-        self.thread.start()
+        self.checking(None)
+        self.event = Clock.schedule_interval(self.checking, 15)
 
+    def stop(self):
+        """
+        DOCSTRING:
+
+        """
+        self.running = False
+        self.event.cancel()
+        for process in self.process_list:
+            if process.active:
+                self.output.text += self.process_shutdown(process) + '\n'
 
     def start_stop_button(self):
         """
@@ -294,26 +266,13 @@ class OutputWindow(MainWindow):
         """
         if self.running:
             self.output.text += '\n[*] STOPING PROCESS WACHER\n'
-
-            self.running = False
+            self.stop()
             self.output_button.text = 'START ALL PROCESS (START WATCHING)'
-
-            output_text = ''
-            for process in self.process_list:
-                if process.active:
-                    output_text += self.process_shutdown(process) + '\n'
-
-            self.output.text += output_text
 
         else:
             self.output.text += '\n[*] STARTING PROCESS WACHER\n'
             self.run()
             self.output_button.text = 'SHUTDOWN ALL PROCESS (STOP WATCHING)'
-
-
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 
 class AddProcess(MainWindow):
@@ -326,6 +285,10 @@ class AddProcess(MainWindow):
     proc_type = ObjectProperty(None)
 
     def add_process(self):
+        """
+        DOCSTRING:
+
+        """
         DB.new_process(self.proc_name.text, self.proc_caption.text, self.proc_type.text)
 
         self.proc_name.text = ''
@@ -333,11 +296,6 @@ class AddProcess(MainWindow):
         self.proc_type.text = ''
 
         show_popup('info', 'Successfuly added new process to DB.')
-
-
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 
 class OverallStats(MainWindow):
@@ -348,12 +306,12 @@ class OverallStats(MainWindow):
     stats_output = ObjectProperty(None)
 
     def get_stats(self):
+        """
+        DOCSTRING:
+
+        """
         stats_text = DB.get_stats()
         self.stats_output.text = stats_text
-
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 
 class AppUsage(MainWindow):
@@ -365,23 +323,25 @@ class AppUsage(MainWindow):
     app_output = ObjectProperty(None)
 
     def get_usage(self):
+        """
+        DOCSTRING:
+
+        """
         output_text = DB.get_usage(self.app_input.text)
         self.app_input.text = ''
-        
+
         if not output_text:
             show_popup('error', 'Wrong application name.')
         else:
             self.app_output.text = output_text
 
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
 
 class WindowManager(ScreenManager):
     """
     DOCSTRING:
 
     """
+
 
 class Application(MDApp):
     """
@@ -398,29 +358,33 @@ class Application(MDApp):
         Window.bind(on_request_close=self.on_request_close)
 
     def on_request_close(self, *args):
+        """
+        DOCSTRING:
+
+        """
         show_popup('quit', 'Are you sure you want to quit?')
         return True
 
 
-def show_popup(type, text):
+def show_popup(type, txt):
     """
     DOCSTRING:
 
     """
     if type == 'error':
         popup = PopupError()
-        popup.ids.error_label.text = text
+        popup.ids.error_label.text = txt
         popup.open()
     elif type == 'info':
         popup = PopupInfo()
-        popup.ids.info_label.text = text
+        popup.ids.info_label.text = txt
         popup.open()
     elif type == 'quit':
         popup = PopupQuit()
-        popup.ids.quit_label.text = text
+        popup.ids.quit_label.text = txt
         popup.open()
     else:
-        show_popup(type='error', text='Trying to create wrong type of popup screen.')
+        show_popup(type='error', txt='Trying to create wrong type of popup screen.')
 
 if __name__ == '__main__':
     # Config.set('kivy', 'exit_on_escape', '0')
